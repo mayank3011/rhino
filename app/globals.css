@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+.btn-primary {
+  @apply inline-block px-4 py-2 rounded bg-indigo-600 text-white font-semibold;
+}
+.btn-outline {
+  @apply inline-block px-4 py-2 rounded border border-slate-300;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -14,13 +21,35 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --app-bg: #ffffff;           /* page background */
+  --app-muted: #f7f7f8;        /* subtle surface / tint */
+  --app-900: #071422;          /* near-black headings */
+  --app-800: #0b2b2b;          /* strong text */
+  --app-700: #0f3d3e;          /* body text (brand-like) */
+  --app-600: #0ea5a4;          /* primary accent - emerald-ish */
+  --app-500: #14b8a6;          /* lighter accent */
+  --app-400: #6ee7d9;          /* subtle accent */
+
+  /* brand */
+  --brand-500: #0ea5a4;
+  --brand-600: #0b9b92;
+
+  /* shadows */
+  --shadow-subtle: 0 4px 12px rgba(20,20,20,0.06);
   }
 }
+
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
 }
+/* hide scrollbar for modern browsers (optional) */
+.no-scrollbar::-webkit-scrollbar { display: none; height: 6px; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* small visual tweak so the focusable carousel outline is clear */
+[role="region"][tabindex="0"]:focus { outline: 3px solid rgba(16,185,129,0.12); outline-offset: 4px; border-radius: 0.5rem; }
+
+
