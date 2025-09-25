@@ -28,7 +28,7 @@ const UserSchema = new Schema<IUser>(
     },
     email: {
       type: String,
-      unique: true,
+      unique: true, // keep unique on the field (creates unique index)
       required: true,
       lowercase: true,
       trim: true,
@@ -93,9 +93,10 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// Indexes
-UserSchema.index({ email: 1 });
-UserSchema.index({ role: 1 });
+// Note: `email` already has `unique: true` above, so DO NOT declare the same index again.
+// Keep other schema-level indexes only if they are not duplicated elsewhere.
+
+UserSchema.index({ role: 1 }); // keep single, intentional index for role
 
 // Virtual displayName
 UserSchema.virtual("displayName").get(function (this: IUser) {
