@@ -1,4 +1,3 @@
-// components/Navbar.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -78,9 +77,14 @@ export default function Navbar() {
       })
       .then((data) => {
         if (!mounted) return;
-        // Backend might return { user: { ... } } or the user object directly
-        const userData = data?.user ?? data ?? null;
-        setUser(userData);
+        // The fix is here: Ensure that the user data is a valid object with an ID.
+        // This prevents the UI from showing "U" when the API returns an empty object.
+        const userPayload = data?.user ?? data;
+        if (userPayload && userPayload.id) {
+          setUser(userPayload);
+        } else {
+          setUser(null);
+        }
       })
       .catch(() => setUser(null))
       .finally(() => {
@@ -294,24 +298,14 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <Link 
-                  href="/login" 
-                  className="px-4 py-2 border-2 border-indigo-200 text-indigo-700 rounded-xl text-sm font-medium hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-200"
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  href="/apply-mentor" 
-                  className="px-4 py-2 border-2 border-emerald-200 text-emerald-700 rounded-xl text-sm font-medium hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
-                >
-                  Apply as Mentor
-                </Link>
-              </div>
+              // New: When not logged in, show a single CTA button.
+              <Link
+                href="/courses"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                Explore our courses
+              </Link>
             )}
-
-            {/* Register CTA */}
-          
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -421,6 +415,13 @@ export default function Navbar() {
                   </div>
                 ) : (
                   <div className="space-y-2">
+                    <Link 
+                      href="/courses"
+                      className="block px-4 py-3 text-base font-medium rounded-lg text-center text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      Explore our courses
+                    </Link>
                     <Link 
                       href="/login" 
                       className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors duration-200"
