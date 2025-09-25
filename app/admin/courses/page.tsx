@@ -36,7 +36,8 @@ export default async function AdminPage() {
 
   // fetch small previews for recent items (lean + serialized)
   const [recentRegsRaw, recentCoursesRaw] = await Promise.all([
-    Registration.find().sort({ createdAt: -1 }).limit(8).populate("course", "title slug").lean(),
+    // populate only needed fields from course (title)
+    Registration.find().sort({ createdAt: -1 }).limit(8).populate("course", "title").lean(),
     Course.find().sort({ createdAt: -1 }).limit(8).lean(),
   ]);
 
@@ -119,7 +120,7 @@ export default async function AdminPage() {
                         <div className="text-xs text-gray-700">{r.email}</div>
                         <div className="text-xs text-gray-500">{r.course?.title ?? "—"}</div>
                       </div>
-                      <div className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</div>
+                      <div className="text-xs text-gray-500">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}</div>
                     </div>
                   ))
                 )}
@@ -161,8 +162,26 @@ export default async function AdminPage() {
                     <div>
                       <div className="font-medium text-gray-900">{c.title}</div>
                       <div className="text-xs text-gray-700">{c.niche ?? "—"}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {c.price ? (
+                          <span>₹{Number(c.price).toLocaleString()}</span>
+                        ) : (
+                          <span className="text-slate-500">Free</span>
+                        )}
+                        {c.duration ? <span className="mx-2">•</span> : null}
+                        {c.duration ? <span className="text-xs">{c.duration}</span> : null}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {c.mentor?.name ? <span>Mentor: {c.mentor.name}</span> : null}
+                        {c.startTime ? (
+                          <>
+                            <span className="mx-2">•</span>
+                            <span>Starts: {new Date(c.startTime).toLocaleDateString()}</span>
+                          </>
+                        ) : null}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</div>
+                    <div className="text-xs text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}</div>
                   </div>
                 ))
               )}
@@ -170,7 +189,7 @@ export default async function AdminPage() {
 
             <div className="mt-3">
               <Link href="/admin/courses" className="text-sm text-indigo-600 hover:underline">
-                Manage all courses
+                Manage courses
               </Link>
             </div>
           </div>

@@ -1,13 +1,27 @@
 // models/PromoCode.ts
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 
-const PromoSchema = new Schema({
-  code: { type: String, required: true, unique: true, uppercase: true, trim: true },
-  discountType: { type: String, enum: ["percent", "fixed"], required: true },
-  amount: { type: Number, required: true },
-  active: { type: Boolean, default: true },
-  expiresAt: { type: Date, default: null },
-  createdBy: { type: Schema.Types.ObjectId, ref: "User", required: false },
-}, { timestamps: true });
+export interface IPromoCode extends Document {
+  code: string;
+  discountType: "percent" | "flat" | "fixed";
+  amount: number;
+  expiresAt?: Date | null;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export default (mongoose.models.PromoCode as mongoose.Model<any>) || mongoose.model("PromoCode", PromoSchema);
+const PromoCodeSchema = new Schema<IPromoCode>(
+  {
+    code: { type: String, required: true, index: true },
+    discountType: { type: String, enum: ["percent", "flat", "fixed"], default: "percent" },
+    amount: { type: Number, required: true, default: 0 },
+    expiresAt: { type: Date, default: null },
+    active: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+// Keep model across reloads
+const PromoCode: Model<IPromoCode> = mongoose.models.PromoCode || mongoose.model<IPromoCode>("PromoCode", PromoCodeSchema);
+export default PromoCode;

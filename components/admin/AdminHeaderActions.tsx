@@ -42,7 +42,7 @@ export default function AdminHeaderActions({
       </div>
 
       <Link
-        href="/admin/courses/create"
+        href="/course/create"
         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white shadow hover:bg-indigo-700 transition"
       >
         + Create Course

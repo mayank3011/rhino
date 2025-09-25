@@ -29,7 +29,7 @@ function formatPrice(p?: number) {
  */
 export default function CourseCard({ course }: { course: Course }) {
   const { title, excerpt, duration, price, image, slug, mentors } = course;
-  const href = `/course/${slug ?? course._id}`;
+  const href = `/course/${course.slug ?? course._id}`;
 
   // Mentor display helpers
   const primary = (mentors && mentors[0]) ?? null;

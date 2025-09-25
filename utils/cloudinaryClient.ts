@@ -1,15 +1,25 @@
-// utils/cloudinaryClient.ts
-const CLOUD = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
+// app/api/admin/upload/route.ts
+import { NextResponse } from "next/server";
+import cloudinary from "cloudinary";
 
-export function cloudinaryImageUrl(publicId: string, width?: number, options: { crop?: string } = {}) {
-  const base = `https://res.cloudinary.com/${CLOUD}/image/upload`;
-  const transforms: string[] = [];
-  if (width) transforms.push(`w_${width}`);
-  if (options.crop) transforms.push(`c_${options.crop}`);
-  const t = transforms.length ? `${transforms.join(",")}/` : "";
-  return `${base}/${t}${publicId}`;
-}
+// configure cloudinary using env
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-export function cloudinarySrcSet(publicId: string, widths = [320, 640, 1024, 1600]) {
-  return widths.map(w => `${cloudinaryImageUrl(publicId, w)} ${w}w`).join(", ");
+export async function POST(req: Request) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const dataUrl = body?.dataUrl;
+    if (!dataUrl) return NextResponse.json({ error: "dataUrl required" }, { status: 422 });
+
+    // cloudinary can accept data URLs directly
+    const res = await cloudinary.v2.uploader.upload(dataUrl, { folder: "courses" });
+    return NextResponse.json({ url: res.secure_url || res.url, public_id: res.public_id });
+  } catch (err: any) {
+    console.error("upload error", err);
+    return NextResponse.json({ error: err?.message || "Upload failed" }, { status: 500 });
+  }
 }

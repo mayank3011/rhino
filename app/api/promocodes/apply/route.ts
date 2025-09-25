@@ -1,87 +1,85 @@
 // app/api/promocodes/apply/route.ts
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import connect from "../../../../lib/mongodb";
-import Promo from "../../../../models/PromoCode";
+import connect from "@/lib/mongodb";
+import PromoCode from "@/models/PromoCode";
 
-const applySchema = z.object({
-  code: z.string().min(1, "Code is required"),
-  amount: z.coerce.number().nonnegative().optional().default(0),
-});
-
-function formatZodErrors(err: z.ZodError) {
-  const out: Record<string, string[]> = {};
-  for (const issue of err.issues) {
-    const key = issue.path.length ? String(issue.path.join(".")) : "_error";
-    out[key] = out[key] || [];
-    out[key].push(issue.message);
-  }
-  return out;
+function safeNum(v: any) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : NaN;
 }
 
 export async function POST(req: Request) {
   try {
-    // parse + validate payload
     const body = await req.json().catch(() => ({}));
-    const parsed = applySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid input", issues: formatZodErrors(parsed.error) }, { status: 422 });
-    }
-    const { code, amount } = parsed.data;
+    const codeRaw = String(body.code ?? "").trim();
+    const amountRaw = body.amount;
 
-    // ensure DB connection
-    try {
-      await connect();
-    } catch (dbErr: any) {
-      console.error("[promocodes.apply] Mongo connect failed:", dbErr);
-      return NextResponse.json({ error: "db_connect_failed", detail: String(dbErr?.message ?? dbErr) }, { status: 500 });
+    if (!codeRaw) {
+      return NextResponse.json({ error: "missing_code", message: "Promo code is required" }, { status: 400 });
+    }
+    const amount = safeNum(amountRaw);
+    if (!Number.isFinite(amount) || amount < 0) {
+      return NextResponse.json({ error: "invalid_amount", message: "Invalid amount provided" }, { status: 400 });
     }
 
-    // find promo
-    let promo;
-    try {
-      promo = await Promo.findOne({ code: code.toUpperCase(), active: true }).lean();
-    } catch (err: any) {
-      console.error("[promocodes.apply] findOne error:", err);
-      return NextResponse.json({ error: "db_query_failed", detail: String(err?.message ?? err) }, { status: 500 });
-    }
+    await connect();
+
+    // Normalize code to uppercase — ensure DB stores normalized code or query with regex.
+    const code = codeRaw.toUpperCase();
+
+    // Adjust query if your DB stores code as lowercase — change to { code: code.toLowerCase() } etc.
+    const promo = await PromoCode.findOne({ code }).lean();
 
     if (!promo) {
-      return NextResponse.json({ error: "invalid_code" }, { status: 404 });
+      // Try case-insensitive fallback if DB codes differ
+      const promoFallback = await PromoCode.findOne({ code: { $regex: `^${escapeRegExp(codeRaw)}$`, $options: "i" } }).lean();
+      if (!promoFallback) return NextResponse.json({ error: "invalid_code", message: "Promo code not found" }, { status: 404 });
+      // use fallback
+      Object.assign(promo ?? {}, promoFallback);
     }
 
-    // check expiry: convert to Date safely
-    try {
-      if (promo.expiresAt) {
-        const expires = new Date(promo.expiresAt);
-        if (isNaN(expires.getTime())) {
-          console.warn("[promocodes.apply] promo.expiresAt invalid:", promo.expiresAt);
-        } else if (expires.getTime() < Date.now()) {
-          return NextResponse.json({ error: "expired" }, { status: 410 });
-        }
-      }
-    } catch (dateErr: any) {
-      console.error("[promocodes.apply] expiresAt check error:", dateErr);
+    // validate promo (expiry / min amount / uses left)
+    const now = new Date();
+    if (promo.expiresAt && new Date(promo.expiresAt) < now) {
+      return NextResponse.json({ error: "expired", message: "Promo code expired" }, { status: 400 });
+    }
+    if (promo.minAmount && amount < Number(promo.minAmount)) {
+      return NextResponse.json({ error: "min_amount", message: `Minimum amount is ${promo.minAmount}` }, { status: 400 });
+    }
+    if (promo.usesLimit && promo.usesCount >= promo.usesLimit) {
+      return NextResponse.json({ error: "no_uses_left", message: "Promo uses exhausted" }, { status: 400 });
     }
 
     // compute discount
-    let discountValue = 0;
-    if (promo.discountType === "percent") {
-      discountValue = Math.round(((promo.amount / 100) * amount) * 100) / 100;
-    } else {
-      discountValue = promo.amount;
-    }
-    const final = Math.max(0, Math.round((amount - discountValue) * 100) / 100);
+    let discountAmount = 0;
+    const pType = String(promo.type ?? "").toLowerCase();
+    const pVal = Number(promo.amount ?? promo.value ?? 0);
 
+    if (pType === "flat") {
+      discountAmount = Math.min(pVal, amount);
+    } else if (pType === "percent") {
+      discountAmount = Math.round((amount * pVal) / 100);
+    } else {
+      // unknown type -> fallback
+      discountAmount = 0;
+    }
+
+    const finalAmount = Math.max(0, Math.round(amount - discountAmount));
+
+    // return standard response
     return NextResponse.json({
       ok: true,
-      code: promo.code,
-      discountType: promo.discountType,
-      discountAmount: discountValue,
-      finalAmount: final,
+      code: promo.code ?? codeRaw,
+      discountType: pType,
+      discountAmount,
+      finalAmount,
     });
   } catch (err: any) {
-    console.error("[promocodes.apply] Unexpected error:", err);
-    return NextResponse.json({ error: "internal_error", detail: String(err?.message ?? err) }, { status: 500 });
+    console.error("PROMO APPLY ERR:", err);
+    return NextResponse.json({ error: "server_error", message: String(err?.message ?? err) }, { status: 500 });
   }
+}
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

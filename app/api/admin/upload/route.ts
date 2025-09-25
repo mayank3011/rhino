@@ -1,27 +1,10 @@
 // app/api/admin/upload/route.ts
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import streamifier from "streamifier";
 import cloudinary from "../../../../lib/cloudinary";
+import { cookies } from "next/headers";
 import { verifyToken } from "../../../../lib/auth";
 
-function uploadBufferToCloudinary(buffer: Buffer, filenamePrefix = "") {
-  return new Promise<any>((resolve, reject) => {
-    const uploadOptions: any = {
-      folder: process.env.CLOUDINARY_UPLOAD_FOLDER || "rhino_courses",
-      public_id: filenamePrefix ? `${filenamePrefix}-${Date.now()}` : `img-${Date.now()}`,
-      resource_type: "image",
-      overwrite: false,
-      use_filename: true,
-    };
-    const uploadStream = cloudinary.uploader.upload_stream(uploadOptions, (err, res) => {
-      if (err) return reject(err);
-      resolve(res);
-    });
-    streamifier.createReadStream(buffer).pipe(uploadStream);
-  });
-}
-
+// simple admin-only uploader that accepts a data URL (base64) or direct image URL
 async function ensureAdmin() {
   const token = cookies().get(process.env.COOKIE_NAME || "token")?.value;
   if (!token) throw new Error("unauthenticated");
@@ -31,23 +14,27 @@ async function ensureAdmin() {
 }
 
 export async function POST(req: Request) {
-  try { await ensureAdmin(); } catch (err: any) {
-    if (err.message === "unauthenticated") return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await ensureAdmin();
+  } catch (e: any) {
+    const msg = e?.message || "Not authorized";
+    const status = String(msg).toLowerCase().includes("unauthenticated") ? 401 : 403;
+    return NextResponse.json({ error: msg }, { status });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "File required" }, { status: 400 });
-  if (!file.type.startsWith("image/")) return NextResponse.json({ error: "Only images allowed" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const dataUrl = body.dataUrl || body.url || body.file;
+  if (!dataUrl) return NextResponse.json({ error: "dataUrl required" }, { status: 400 });
 
-  const arr = await file.arrayBuffer();
-  const buffer = Buffer.from(arr);
   try {
-    const result = await uploadBufferToCloudinary(buffer, "course");
-    return NextResponse.json({ ok: true, url: result.secure_url, public_id: result.public_id, width: result.width, height: result.height });
+    const res: any = await cloudinary.uploader.upload(dataUrl, {
+      folder: "rhino_courses",
+      resource_type: "image",
+      overwrite: true,
+    });
+    return NextResponse.json({ url: res.secure_url || res.url, public_id: res.public_id });
   } catch (err: any) {
-    console.error("Upload error", err);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    console.error("cloudinary upload error:", err);
+    return NextResponse.json({ error: err?.message || "Upload failed" }, { status: 500 });
   }
 }
