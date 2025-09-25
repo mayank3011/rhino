@@ -19,6 +19,7 @@ interface User {
 interface BrandConfig {
   title: string;
   logoUrl: string;
+  logoUrlMobile: string; // New: Mobile logo URL
   primaryGradient: string;
   primaryColor: string;
   accentColor: string;
@@ -39,6 +40,7 @@ export default function Navbar() {
   const BRAND: BrandConfig = {
     title: "RhinoGeeks",
     logoUrl: "/rhino-logo.png",
+    logoUrlMobile: "/rhino-logo-mobile.png", // Placeholder for the mobile logo
     primaryGradient: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #3b82f6 100%)",
     primaryColor: "#6366f1",
     accentColor: "#10b981",
@@ -138,17 +140,28 @@ export default function Navbar() {
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
-              <div className="relative w-40 h-40 sm:w-40 sm:h-40">
+              {/* Desktop Logo: visible on lg and above */}
+              <div className="relative w-45 h-45 flex-shrink-0 hidden lg:block">
                 <Image 
                   src={BRAND.logoUrl} 
                   alt={BRAND.title} 
                   fill
                   className="object-contain" 
                   priority
-                  sizes="50px"
                 />
               </div>
-             
+              
+              {/* Mobile Logo: hidden on lg and above */}
+              <div className="relative w-10 h-10 flex-shrink-0 lg:hidden">
+                <Image 
+                  src={BRAND.logoUrlMobile} 
+                  alt={BRAND.title} 
+                  fill
+                  className="object-contain" 
+                  priority
+                />
+              </div>
+              
             </Link>
           </div>
 

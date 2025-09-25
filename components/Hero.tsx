@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Menu, Transition } from "@headlessui/react";
-import Link from "next/link";
 
 // Color constants based on the desired theme (Indigo/Violet for primary, Emerald for accent)
 const PRIMARY_BG_COLOR = "bg-indigo-950"; // Dark indigo background
@@ -14,10 +13,51 @@ const SHADOW_COLOR = "shadow-lg shadow-indigo-900/50";
 export default function Hero() {
   return (
     <section className={`relative ${PRIMARY_BG_COLOR} ${TEXT_COLOR} rounded-3xl overflow-hidden mx-4 lg:mx-20 mt-10 ${SHADOW_COLOR}`}>
+      {/* Background Image and Overlay */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{
+          // Correct path for a local image placed in the /public directory
+          backgroundImage: "url('/pattern-grid.png')",
+          opacity: 0.6
+        }}
+      />
+      
       {/* Subtle Background Pattern (using radial gradient for depth) */}
-      <div className="absolute inset-0 bg-indigo-900/50 opacity-50 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]" />
+      <div className="absolute inset-0 bg-indigo-900/50 opacity-50 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] z-10" />
 
-      <div className="relative container mx-auto px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      {/* Floating Icons with Animations */}
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 animate-float opacity-30">
+          <svg className="w-16 h-16 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <div className="absolute top-1/2 left-3/4 animate-float-delay-2 opacity-30">
+          <svg className="w-20 h-20 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-spin-slow opacity-30">
+          <svg className="w-24 h-24 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
+            <path d="M12 2v20"></path>
+            <path d="M4.93 4.93l14.14 14.14"></path>
+            <path d="M2 12h20"></path>
+            <path d="M4.93 19.07L19.07 4.93"></path>
+          </svg>
+        </div>
+        <div className="absolute bottom-1/4 right-1/4 animate-float-delay-3 opacity-30">
+          <svg className="w-20 h-20 text-yellow-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <div className="relative container mx-auto px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center z-30">
         
         {/* Left column: Headline and CTA */}
         <div>
@@ -48,32 +88,32 @@ export default function Hero() {
                     {/* Program Links */}
                     <Menu.Item>
                       {({ active }) => (
-                        <Link
+                        <a
                           href="/courses"
                           className={`block px-4 py-3 text-base font-medium transition-colors ${active ? "bg-indigo-50 text-indigo-700" : ""}`}
                         >
                           All Courses
-                        </Link>
+                        </a>
                       )}
                     </Menu.Item>
                     <Menu.Item>
                       {({ active }) => (
-                        <Link
+                        <a
                           href="/workshops"
                           className={`block px-4 py-3 text-base font-medium transition-colors ${active ? "bg-indigo-50 text-indigo-700" : ""}`}
                         >
                           Workshops
-                        </Link>
+                        </a>
                       )}
                     </Menu.Item>
                     <Menu.Item>
                       {({ active }) => (
-                        <Link
+                        <a
                           href="/mentorship"
                           className={`block px-4 py-3 text-base font-medium transition-colors ${active ? "bg-indigo-50 text-indigo-700" : ""}`}
                         >
                           Mentorship
-                        </Link>
+                        </a>
                       )}
                     </Menu.Item>
                   </div>
