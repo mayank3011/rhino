@@ -7,12 +7,12 @@ import mongoose from "mongoose";
  * - Does NOT throw during module import. It throws only when connect() is called
  *   and MONGODB_URI is missing, so builds won't fail at import time.
  * - Caches connection across hot reloads using a global object.
- * - Exposes async connect() which returns the mongoose connection.
+ * - Exposes async connect() which returns the mongoose connection (mongoose.Mongoose).
  */
 
 type MongooseCache = {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
+  conn: mongoose.Mongoose | null;
+  promise: Promise<mongoose.Mongoose> | null;
 };
 
 declare global {
@@ -25,13 +25,13 @@ if (!global._mongooseGlobal) {
   global._mongooseGlobal = { conn: null, promise: null };
 }
 
-const cache = global._mongooseGlobal;
+const cache = global._mongooseGlobal!;
 
 /**
  * Connect to MongoDB using MONGODB_URI env var.
  * Throws if called and MONGODB_URI is not set.
  */
-async function connect(): Promise<typeof mongoose> {
+async function connect(): Promise<mongoose.Mongoose> {
   // If already connected, return immediately
   if (cache.conn) {
     return cache.conn;
@@ -46,21 +46,22 @@ async function connect(): Promise<typeof mongoose> {
   // If a connection attempt is in progress, await it
   if (cache.promise) {
     await cache.promise;
-    // after promise resolves, cache.conn should be set
     return cache.conn!;
   }
 
-  // Set mongoose options explicitly
+  // Mongoose settings (run once)
+  // Only enable autoIndex in non-production to avoid expensive index builds in prod.
   mongoose.set("autoIndex", process.env.NODE_ENV !== "production");
 
+  // Note: useNewUrlParser and useUnifiedTopology are deprecated / ignored with Node Driver v4+
+  // serverSelectionTimeoutMS is still useful (it comes from MongoClient options) to fail fast.
+  const connectOptions: mongoose.ConnectOptions = {
+    // Keep options minimal. Add tls, replicaSet, authSource etc. here if required.
+    serverSelectionTimeoutMS: 5000,
+  };
+
   cache.promise = mongoose
-    .connect(MONGODB_URI, {
-      // modern drivers default these; included for clarity
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      // optional: set a server selection timeout so connection attempts fail fast
-      serverSelectionTimeoutMS: 5000,
-    } as mongoose.ConnectOptions)
+    .connect(MONGODB_URI, connectOptions)
     .then((m) => {
       cache.conn = m;
       cache.promise = null;
@@ -68,7 +69,6 @@ async function connect(): Promise<typeof mongoose> {
     })
     .catch((err) => {
       cache.promise = null;
-      // rethrow so callers can handle
       throw err;
     });
 
