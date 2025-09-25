@@ -41,3 +41,5 @@ export default async function Page({ params }: Props) {
     </div>
   );
 }
+// app/register/page.tsx
+export const dynamic = "force-dynamic";
