@@ -1,4 +1,3 @@
-// app/page.tsx
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,6 +6,30 @@ import Course from "../models/Course";
 import CourseCard from "../components/CourseCard";
 import ImpactSection from "../components/ImpactSection";
 import Hero from "../components/Hero";
+
+// --- SEO Metadata (added for search engine optimization) ---
+export const metadata = {
+  title: "RhinoGeeks: Master Coding with Expert-Led Programs",
+  description: "Level up your career with hands-on coding bootcamps and mentorship from industry experts. Build a portfolio of live projects and land your dream job.",
+  keywords: ["coding bootcamp", "tech mentorship", "web development courses", "RhinoGeeks", "learn to code", "full-stack development"],
+  authors: [{ name: "RhinoGeeks" }],
+  openGraph: {
+    title: "RhinoGeeks: Master Coding with Expert-Led Programs",
+    description: "Level up your career with hands-on coding bootcamps and mentorship from industry experts. Build a portfolio of live projects and land your dream job.",
+    url: "https://www.rhinogeeks.com",
+    siteName: "RhinoGeeks",
+    images: [
+      {
+        url: "/og-image.png", // Replace with a high-quality open graph image
+        width: 1200,
+        height: 630,
+        alt: "RhinoGeeks: Empowering developers with hands-on coding programs",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+};
 
 // --- Type Definitions ---
 interface ICourseLean {
