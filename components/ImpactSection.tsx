@@ -36,34 +36,47 @@ export default function ImpactSection() {
 
   // Auto-scroll using requestAnimationFrame for smoothness
   useEffect(() => {
-    const track = trackRef.current;
-    const wrapper = wrapperRef.current;
-    if (!track || !wrapper) return;
+    // ensure refs exist initially
+    if (!trackRef.current || !wrapperRef.current) return;
 
     let last = performance.now();
-    // baseSpeed controls px per second effectively; we use frame delta
-    const basePxPerSecond = 30 * speed; // tweak for faster/slower
+    const basePxPerSecond = 30 * speed;
 
     function step(now: number) {
+      const track = trackRef.current;
+      const wrapper = wrapperRef.current;
+
+      // guard: if refs are gone, stop the loop
+      if (!track || !wrapper) {
+        rafRef.current = null;
+        return;
+      }
+
       const delta = now - last;
       last = now;
+
       if (!paused) {
-        // move left
         const px = (basePxPerSecond * delta) / 1000;
         // advance scrollLeft
         wrapper.scrollLeft = wrapper.scrollLeft + px;
+
         // If we've scrolled past the first set, reset by subtracting width of one set for seamless loop
-        const singleWidth = track.scrollWidth / 2;
-        if (wrapper.scrollLeft >= singleWidth) {
+        const singleWidth = track.scrollWidth / 2 || 0;
+        if (singleWidth > 0 && wrapper.scrollLeft >= singleWidth) {
           wrapper.scrollLeft = wrapper.scrollLeft - singleWidth;
         }
       }
+
       rafRef.current = requestAnimationFrame(step);
     }
 
     rafRef.current = requestAnimationFrame(step);
+
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, [paused, speed]);
 
@@ -121,9 +134,7 @@ export default function ImpactSection() {
 
             <div className="relative z-10">
               <h2 className="text-3xl md:text-4xl font-bold text-[#083033]">6.5M+ Learners</h2>
-              <p className="mt-2 text-slate-700 max-w-xl">
-                have reaped benefits from our programs
-              </p>
+              <p className="mt-2 text-slate-700 max-w-xl">have reaped benefits from our programs</p>
 
               {/* Controls + carousel */}
               <div className="mt-6 flex items-center gap-3">
@@ -180,9 +191,13 @@ export default function ImpactSection() {
 
                 {/* speed controls (optional) */}
                 <div className="ml-3 flex items-center gap-1 text-xs text-slate-600">
-                  <button onClick={() => setSpeed((s) => Math.max(0.2, s - 0.1))} className="px-2 py-1 border rounded">-</button>
+                  <button onClick={() => setSpeed((s) => Math.max(0.2, s - 0.1))} className="px-2 py-1 border rounded">
+                    -
+                  </button>
                   <div className="px-2">Auto</div>
-                  <button onClick={() => setSpeed((s) => Math.min(1.5, s + 0.1))} className="px-2 py-1 border rounded">+</button>
+                  <button onClick={() => setSpeed((s) => Math.min(1.5, s + 0.1))} className="px-2 py-1 border rounded">
+                    +
+                  </button>
                 </div>
               </div>
             </div>

@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 const MONGODB_URI = process.env.MONGODB_URI!;
 if (!MONGODB_URI) throw new Error("Please add MONGODB_URI to .env.local");
 
+mongoose.set("autoIndex", process.env.NODE_ENV !== "production");
+
+
 declare global {
   var _mongoose: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } | undefined;
 }

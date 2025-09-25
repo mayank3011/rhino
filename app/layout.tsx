@@ -14,13 +14,13 @@ const inter = Inter({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className={inter.className}>
-        <ToastProvider />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-      </body>
-    </html>
+<html lang="en" className={inter.className}>
+  <body className={inter.className} suppressHydrationWarning={true}>
+    <ToastProvider />
+    <Navbar />
+    <main>{children}</main>
+    <Footer />
+  </body>
+</html>
   );
 }

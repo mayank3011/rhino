@@ -4,12 +4,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// --- Constants based on Logo Colors for Tailwind classes ---
+const COLOR_PRIMARY = "indigo-600"; 
+const COLOR_SECONDARY = "violet-700";
+
+// --- Type Definitions ---
 type Topic = { text?: string };
 type ModuleType = { title?: string; topics?: Topic[] };
 
 export default function CourseModules({
   modules = [],
-  accentColor = "#5b2bff",
+  // Use a sensible default hex color for dynamic styling
+  accentColor = "#4f46e5", 
 }: {
   modules: ModuleType[];
   accentColor?: string;
@@ -17,22 +23,24 @@ export default function CourseModules({
   const [open, setOpen] = useState<Record<number, boolean>>({});
   const [expandedAll, setExpandedAll] = useState(false);
 
+  // 1. Fixed 'any' in useEffect dependency array and initial map
   // initialize open map (closed by default)
   useEffect(() => {
     const initial: Record<number, boolean> = {};
-    modules.forEach((_: any, i: number) => initial[i] = false);
+    modules.forEach((_: ModuleType, i: number) => initial[i] = false); 
     setOpen(initial);
   }, [modules]);
 
+  // 2. Fixed 'any' in useEffect map
   // Expand all toggle
   useEffect(() => {
     if (expandedAll) {
       const m: Record<number, boolean> = {};
-      modules.forEach((_: any, i: number) => m[i] = true);
+      modules.forEach((_: ModuleType, i: number) => m[i] = true);
       setOpen(m);
     } else {
       const m: Record<number, boolean> = {};
-      modules.forEach((_: any, i: number) => m[i] = false);
+      modules.forEach((_: ModuleType, i: number) => m[i] = false);
       setOpen(m);
     }
   }, [expandedAll, modules]);
@@ -66,40 +74,56 @@ export default function CourseModules({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-4 border-slate-100">
         <div>
-          <h3 className="text-lg font-semibold">Course content</h3>
-          <div className="text-sm text-slate-500">Modules & topics (ordered)</div>
+          <h3 className={`text-2xl font-bold text-${COLOR_SECONDARY}`}>Course Content</h3>
+          <div className="text-sm text-slate-500">Structured Modules & Topics</div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => setExpandedAll((v) => !v)}
-            className="text-sm px-3 py-1 border rounded"
+            className="text-sm px-4 py-2 border rounded-lg font-medium transition-colors hover:bg-slate-50"
+            // Retaining dynamic style for accent color
             style={{ borderColor: accentColor, color: accentColor }}
           >
-            {expandedAll ? "Collapse all" : "Expand all"}
+            {expandedAll ? "Collapse All" : "Expand All"}
           </button>
-          <div className="text-xs text-slate-500">{anyOpen ? "Some open" : "All closed"}</div>
+          <div className="hidden sm:block text-xs text-slate-400">
+            ({anyOpen ? "Some open" : "All closed"})
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
+        {/* 3. Fixed 'any' in modules map argument */}
         {modules.map((m: ModuleType, i: number) => (
-          <div key={i} id={`module-${i}`} className="border rounded">
+          <div key={i} id={`module-${i}`} className="border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
             <button
               onClick={() => toggle(i)}
-              className="w-full flex items-center justify-between p-3"
+              className="w-full flex items-center justify-between p-4 focus:outline-none transition-colors hover:bg-slate-50"
               aria-expanded={Boolean(open[i])}
             >
-              <div className="text-left">
-                <div className="font-medium" style={{ color: accentColor }}>{m.title || `Module ${i + 1}`}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{(m.topics || []).length} topics</div>
+              <div className="text-left flex items-start gap-3">
+                <span className={`text-lg font-extrabold text-${COLOR_PRIMARY} flex-shrink-0`}>
+                  {i + 1}.
+                </span>
+                <div>
+                    <div className="text-lg font-semibold text-gray-800">
+                      {m.title || `Module ${i + 1}`}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {(m.topics || []).length} topics
+                    </div>
+                </div>
               </div>
-              <div className="ml-4 text-slate-500">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M6 9l6 6 6-6" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform={open[i] ? "rotate(180 12 12)" : ""} />
+              
+              {/* Chevron icon with rotation */}
+              <div className="ml-4 text-slate-500 flex-shrink-0 transition-transform duration-280" style={{ transform: open[i] ? "rotate(180deg)" : "rotate(0deg)" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  {/* Stroke color uses dynamic prop */}
+                  <path d="M6 9l6 6 6-6" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </button>
@@ -112,13 +136,14 @@ export default function CourseModules({
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.28, ease: "easeInOut" }}
-                  className="overflow-hidden"
+                  className="overflow-hidden bg-slate-50/50"
                 >
-                  <div className="p-4 pt-0">
+                  <div className="px-4 pb-4 pt-2 border-t border-slate-100">
                     <ol className="list-decimal pl-5 space-y-2 text-slate-700">
-                      {(m.topics || []).map((t: any, ti: number) => (
+                      {/* 4. Fixed 'any' in topics map argument */}
+                      {(m.topics || []).map((t: Topic, ti: number) => (
                         <li key={ti} className="py-1">
-                          <div className="text-sm">{t.text ?? "Topic"}</div>
+                          <div className="text-base font-normal">{t.text ?? `Topic ${ti + 1}`}</div>
                         </li>
                       ))}
                     </ol>

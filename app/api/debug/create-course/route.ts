@@ -1,13 +1,40 @@
 // app/api/debug/create-course/route.ts
+
+
 import { NextResponse } from "next/server";
 import connect from "../../../../lib/mongodb";
-import Course from "../../../../models/Course";
+import Course, { ICourse } from "../../../../models/Course";
 
-export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
+interface CreateCourseRequest {
+  title?: string;
+  description?: string;
+  price?: number;
+  image?: string;
+  imagePublicId?: string;
+  mentor?: {
+    name: string;
+    image: string;
+    imagePublicId: string;
+  };
+  startTime?: string;
+  duration?: string;
+  keyOutcomes?: string[];
+  modules?: unknown[];
+}
+
+interface CreateCourseResponse {
+  ok: boolean;
+  _id?: string;
+  error?: string;
+}
+
+export async function POST(req: Request): Promise<NextResponse<CreateCourseResponse>> {
+  const body: CreateCourseRequest = await req.json().catch(() => ({}));
+  
   await connect();
+  
   try {
-    const created = await Course.create({
+    const created: ICourse = await Course.create({
       title: body.title || `DEBUG ${Date.now()}`,
       description: body.description || "",
       price: typeof body.price === "number" ? body.price : 0,
@@ -19,10 +46,18 @@ export async function POST(req: Request) {
       keyOutcomes: Array.isArray(body.keyOutcomes) ? body.keyOutcomes : [],
       modules: Array.isArray(body.modules) ? body.modules : [],
     });
+    
     console.log("DEBUG created:", created._id?.toString?.());
-    return NextResponse.json({ ok: true, _id: created._id.toString() });
-  } catch (err: any) {
-    console.error("DEBUG create failed:", err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({ 
+      ok: true, 
+      _id: (created._id as { toString: () => string }).toString()
+    });
+  } catch (error) {
+    console.error("DEBUG create failed:", error);
+    const err = error as Error;
+    return NextResponse.json(
+      { ok: false, error: String(err.message ?? err) }, 
+      { status: 500 }
+    );
   }
 }

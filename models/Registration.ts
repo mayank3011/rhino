@@ -7,25 +7,36 @@ export interface IPaymentProofEmail {
   sentAt?: Date | null;
   messageId?: string | null;
   lastEvent?: string | null;
-  lastEventRaw?: any | null;
-  bounceInfo?: any | null;
+  lastEventRaw?: Record<string, unknown> | null;
+  bounceInfo?: Record<string, unknown> | null;
+}
+
+export interface ICreatedRemoteUser {
+  result?: {
+    created: boolean;
+    passwordPlain?: string;
+    error?: string;
+    user?: Record<string, unknown>;
+  };
 }
 
 export interface IPaymentProof {
   method?: string | null;
   txnId?: string | null;
   screenshot?: string | null;
+  screenshots?: string[];
   verificationNotes?: string | null;
   verifiedAt?: Date | null;
   verifiedBy?: string | null;
   email?: IPaymentProofEmail | null;
+  createdRemoteUser?: ICreatedRemoteUser | null;
 }
 
 export interface IRegistration extends Document {
   name: string;
   email: string;
   phone?: string | null;
-  course?: string | null; // slug or id
+  course?: string | null;
   promoCode?: string | null;
   amount: number;
   paid: boolean;
@@ -49,15 +60,29 @@ const PaymentProofEmailSchema = new Schema<IPaymentProofEmail>(
   { _id: false }
 );
 
+const CreatedRemoteUserSchema = new Schema<ICreatedRemoteUser>(
+  {
+    result: {
+      created: { type: Boolean },
+      passwordPlain: { type: String },
+      error: { type: String },
+      user: { type: Schema.Types.Mixed },
+    }
+  },
+  { _id: false }
+);
+
 const PaymentProofSchema = new Schema<IPaymentProof>(
   {
     method: { type: String },
     txnId: { type: String },
     screenshot: { type: String },
+    screenshots: [{ type: String }],
     verificationNotes: { type: String },
     verifiedAt: { type: Date },
     verifiedBy: { type: String },
     email: { type: PaymentProofEmailSchema, default: null },
+    createdRemoteUser: { type: CreatedRemoteUserSchema, default: null },
   },
   { _id: false }
 );
@@ -78,6 +103,12 @@ const RegistrationSchema = new Schema<IRegistration>(
   { timestamps: true }
 );
 
-// Avoid model overwrite issues in dev with Next.js Hot Reloading
-const Registration: Model<IRegistration> = mongoose.models.Registration || mongoose.model<IRegistration>("Registration", RegistrationSchema);
+interface IRegistrationModel extends Model<IRegistration> {
+  findByStatus(status: string): Promise<IRegistration[]>;
+  findByEmail(email: string): Promise<IRegistration | null>;
+}
+
+const Registration: IRegistrationModel = (mongoose.models.Registration as IRegistrationModel) || 
+  mongoose.model<IRegistration, IRegistrationModel>("Registration", RegistrationSchema);
+
 export default Registration;

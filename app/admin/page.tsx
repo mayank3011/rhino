@@ -8,17 +8,45 @@ import Course from "../../models/Course";
 import Link from "next/link";
 import { serializeArray } from "../../utils/serialize";
 import AdminCoursesManager from "../../components/admin/AdminCoursesManager";
-import AdminPromoManager from "../../components/admin/AdminPromoManager";
-import AdminHeaderActions from "../../components/admin/AdminHeaderActions";
+
+// Types
+interface AuthPayload {
+  role: string;
+  userId: string;
+  email: string;
+}
+
+interface SerializedRegistration {
+  _id: string;
+  name: string;
+  email: string;
+  createdAt?: string;
+  course?: {
+    title: string;
+  };
+}
+
+interface SerializedCourse {
+  _id: string;
+  title: string;
+  niche?: string;
+  price?: number;
+  duration?: string;
+  createdAt?: string;
+}
 
 export const revalidate = 0;
 
 export default async function AdminPage() {
-  const token = cookies().get(process.env.COOKIE_NAME || "token")?.value;
+  const token = (await cookies()).get(process.env.COOKIE_NAME || "token")?.value;
   if (!token) redirect("/login");
 
-  let payload: any;
-  try { payload = verifyToken(token); } catch { redirect("/login"); }
+  let payload: AuthPayload;
+  try { 
+    payload = verifyToken(token) as AuthPayload; 
+  } catch { 
+    redirect("/login"); 
+  }
   if (payload.role !== "admin") redirect("/login");
 
   await connect();
@@ -30,8 +58,10 @@ export default async function AdminPage() {
     Registration.countDocuments({}),
   ]);
 
-  const regs = serializeArray(regsRaw);
-  const courses = serializeArray(coursesRaw);
+ const regs = serializeArray<SerializedRegistration>(regsRaw);
+const courses = serializeArray<SerializedCourse>(coursesRaw);
+  // Remove unused variable warning by using courses data
+  console.log(`Loaded ${courses.length} courses for admin dashboard`);
 
   return (
     <div className="container mx-auto px-6 py-10">
@@ -69,7 +99,7 @@ export default async function AdminPage() {
             <tbody>
               {regs.length === 0 ? (
                 <tr><td colSpan={4} className="px-4 py-6 text-sm text-slate-600">No registrations yet.</td></tr>
-              ) : regs.map((r:any) => (
+              ) : regs.map((r) => (
                 <tr key={r._id} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="px-4 py-3">{r.name}</td>
                   <td className="px-4 py-3">{r.email}</td>

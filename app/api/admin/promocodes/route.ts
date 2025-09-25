@@ -1,38 +1,90 @@
-// app/api/admin/promocodes/route.ts
-import { NextResponse } from "next/server";
+//app/api/admin/promocodes/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/mongodb";
 import PromoCode from "@/models/PromoCode";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
-export async function GET() {
-  await connect();
-  const docs = await PromoCode.find().sort({ createdAt: -1 }).lean();
-  return NextResponse.json(docs);
+// Types
+interface AuthPayload {
+  role: string;
+  userId: string;
+  email: string;
 }
 
-export async function POST(req: Request) {
+interface ErrorResponse {
+  error: string;
+  message?: string;
+  details?: string;
+}
+
+/** Authentication middleware */
+async function ensureAdmin(): Promise<AuthPayload> {
+  const token = (await cookies()).get(process.env.COOKIE_NAME || "token")?.value;
+  if (!token) throw new Error("unauthenticated");
+
+  const payload = verifyToken(token) as AuthPayload | null;
+  if (!payload || payload.role !== "admin") throw new Error("forbidden");
+
+  return payload;
+}
+
+/** Error handler for consistent API responses */
+function handleError(error: unknown, defaultMessage = "An error occurred"): NextResponse<ErrorResponse> {
+  const message = error instanceof Error ? error.message : defaultMessage;
+  console.error("Promocode API Error:", error);
+
+  if (message === "unauthenticated") {
+    return NextResponse.json({
+      error: "Authentication required",
+      message: "Please log in to continue"
+    }, { status: 401 });
+  }
+
+  if (message === "forbidden") {
+    return NextResponse.json({
+      error: "Admin access required",
+      message: "Insufficient permissions"
+    }, { status: 403 });
+  }
+
+  return NextResponse.json({
+    error: "server_error",
+    message: message,
+    details: error instanceof Error ? error.stack : String(error)
+  }, { status: 500 });
+}
+
+/** GET - Retrieve all promocodes */
+export async function GET(): Promise<NextResponse> {
   try {
+    await ensureAdmin();
+    await connect();
+    const promoCodes = await PromoCode.find({}).sort({ createdAt: -1 }).lean();
+    return NextResponse.json(promoCodes);
+  } catch (error) {
+    return handleError(error, "Failed to fetch promocodes");
+  }
+}
+
+/** POST - Create a new promocode */
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  try {
+    await ensureAdmin();
     const body = await req.json();
-    if (!body.code) return NextResponse.json({ error: "missing_code" }, { status: 422 });
 
     await connect();
-    const normalized = String(body.code).trim().toUpperCase();
-    // avoid duplicates (simple check)
-    const existing = await PromoCode.findOne({ code: normalized }).lean();
-    if (existing) return NextResponse.json({ error: "exists", message: "Promo code already exists" }, { status: 409 });
 
-    const doc = await PromoCode.create({
-      code: normalized,
-      discountType: body.discountType ?? "percent",
-      amount: Number(body.amount ?? 0),
-      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-      active: body.active !== false,
-      minAmount: body.minAmount ? Number(body.minAmount) : undefined,
-      usesLimit: body.usesLimit ? Number(body.usesLimit) : undefined,
+    const newPromoCode = await PromoCode.create({
+      code: String(body.code).toUpperCase().trim(),
+      discountType: body.discountType,
+      amount: Number(body.amount),
+      expiresAt: body.expiresAt || null,
+      active: !!body.active,
     });
 
-    return NextResponse.json({ ok: true, promo: doc });
-  } catch (err: any) {
-    console.error("admin promo create error:", err);
-    return NextResponse.json({ error: "server_error", message: err?.message ?? String(err) }, { status: 500 });
+    return NextResponse.json(newPromoCode, { status: 201 });
+  } catch (error) {
+    return handleError(error, "Failed to create promocode");
   }
 }

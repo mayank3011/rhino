@@ -4,10 +4,26 @@ import connect from "@/lib/mongodb";
 import Course from "@/models/Course";
 import { notFound, redirect } from "next/navigation";
 import RegisterForm from "@/components/RegisterForm";
+import { Document } from "mongoose";
 
 type Props = { params: { slug: string } };
 
-function escapeRegExp(s: string) {
+// Define a minimal interface for the Course document fields this component uses
+interface ICourseDocument extends Document {
+  title: string;
+  slug?: string;
+  description?: string;
+  price?: number;
+  duration?: string;
+  image?: string;
+  mentor?: {
+    name?: string;
+    image?: string;
+    role?: string;
+  };
+}
+
+function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -28,23 +44,24 @@ export default async function Page({ params }: Props) {
   // connect to DB
   try {
     await connect();
-  } catch (err: any) {
+  } catch (err: unknown) {
+    // 1. FIXED: Replaced 'any' with 'unknown' in catch block
     console.error("Mongo connect failed:", err);
     // if DB not reachable, show 404 (or redirect)
     return notFound();
   }
 
-  let course: any = null;
+  let course: ICourseDocument | null = null; // 2. FIXED: Replaced 'any' with ICourseDocument | null
 
   try {
     // 1) exact slug match
-    course = await Course.findOne({ slug: slugOrId }).lean();
+    course = (await Course.findOne({ slug: slugOrId }).lean()) as ICourseDocument | null;
 
     // 2) try decoded slug (sometimes incoming values are encoded)
     if (!course) {
       const decoded = decodeURIComponent(slugOrId);
       if (decoded !== slugOrId) {
-        course = await Course.findOne({ slug: decoded }).lean();
+        course = (await Course.findOne({ slug: decoded }).lean()) as ICourseDocument | null;
       }
     }
 
@@ -52,27 +69,29 @@ export default async function Page({ params }: Props) {
     if (!course) {
       // use a regex anchored to start/end, escaped
       const rx = new RegExp(`^${escapeRegExp(slugOrId)}$`, "i");
-      course = await Course.findOne({ slug: rx }).lean();
+      course = (await Course.findOne({ slug: rx }).lean()) as ICourseDocument | null;
     }
 
     // 4) fallback: if slug looks like a 24-hex ObjectId, try findById
     if (!course) {
       if (/^[a-fA-F0-9]{24}$/.test(slugOrId)) {
         try {
-          course = await Course.findById(slugOrId).lean();
-        } catch (e) {
+          // 3. FIXED: Removed unused variable 'e' by renaming to '_e'
+          course = (await Course.findById(slugOrId).lean()) as ICourseDocument | null;
+        } catch (_e) {
           course = null;
+          console.error("Course findById error:", _e);
         }
       }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    // 4. FIXED: Replaced 'any' with 'unknown' in catch block
     console.error("Course lookup error:", err);
     course = null;
   }
 
   if (!course) {
     // Helpful fallback: redirect to global register page which accepts ?course=<slugOrId>
-    // This prevents a dead 404 and still lets users register.
     console.warn(`Course not found for slugOrId="${slugOrId}". Redirecting to global /register fallback.`);
     return redirect(`/register?course=${encodeURIComponent(slugOrId)}`);
   }

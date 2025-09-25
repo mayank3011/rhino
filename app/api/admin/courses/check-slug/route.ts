@@ -1,11 +1,31 @@
 // app/api/admin/courses/check-slug/route.ts
-import { NextResponse } from "next/server";
-import connect from "../../../../../../lib/mongodb";
-import Course from "../../../../../../models/Course";
+import { NextRequest, NextResponse } from "next/server";
+import connect from "@/lib/mongodb";
+import Course from "@/models/Course";
 import mongoose from "mongoose";
 
-function slugify(s: string) {
-  return String(s || "")
+// Types
+interface CheckSlugRequest {
+  slug?: string;
+  title?: string;
+  excludeId?: string;
+}
+
+interface DatabaseQuery {
+  slug: string;
+  _id?: { $ne: string };
+}
+
+interface CheckSlugResponse {
+  ok: boolean;
+  available: boolean;
+  slug?: string;
+  message?: string;
+}
+
+/** Create URL-friendly slug from text */
+function slugify(text: string): string {
+  return String(text || "")
     .toLowerCase()
     .trim()
     .replace(/['"`]/g, "")
@@ -14,17 +34,74 @@ function slugify(s: string) {
     .slice(0, 200);
 }
 
-export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const raw = body.slug || body.title || "";
-  if (!raw) return NextResponse.json({ ok: false, available: false, message: "Slug or title required" }, { status: 400 });
-  const slug = slugify(raw);
-  const excludeId = body.excludeId && mongoose.Types.ObjectId.isValid(body.excludeId) ? body.excludeId : null;
+/** Check if slug is available */
+export async function POST(req: NextRequest): Promise<NextResponse<CheckSlugResponse>> {
+  try {
+    // Parse and validate request body
+    const body = await req.json().catch(() => ({})) as CheckSlugRequest;
+    
+    const rawText = body.slug || body.title || "";
+    if (!rawText || typeof rawText !== "string" || rawText.trim() === "") {
+      return NextResponse.json({
+        ok: false,
+        available: false,
+        message: "Slug or title is required"
+      }, { status: 400 });
+    }
 
-  await connect();
-  const q: any = { slug };
-  if (excludeId) q._id = { $ne: excludeId };
-  const exists = await Course.findOne(q).lean();
-  if (!exists) return NextResponse.json({ ok: true, available: true, slug });
-  return NextResponse.json({ ok: true, available: false, slug });
+    // Generate slug from input
+    const slug = slugify(rawText);
+    if (!slug) {
+      return NextResponse.json({
+        ok: false,
+        available: false,
+        message: "Could not generate valid slug from input"
+      }, { status: 400 });
+    }
+
+    // Handle exclude ID for updates
+    const excludeId = body.excludeId && 
+      typeof body.excludeId === "string" && 
+      mongoose.Types.ObjectId.isValid(body.excludeId) 
+        ? body.excludeId 
+        : null;
+
+    // Connect to database
+    await connect();
+
+    // Build query
+    const query: DatabaseQuery = { slug };
+    if (excludeId) {
+      query._id = { $ne: excludeId };
+    }
+
+    // Check if slug exists
+    const existingCourse = await Course.findOne(query).lean();
+
+    if (!existingCourse) {
+      return NextResponse.json({
+        ok: true,
+        available: true,
+        slug
+      });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      available: false,
+      slug,
+      message: "Slug is already in use"
+    });
+
+  } catch (error) {
+    console.error("Check slug error:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    
+    return NextResponse.json({
+      ok: false,
+      available: false,
+      message: `Failed to check slug availability: ${errorMessage}`
+    }, { status: 500 });
+  }
 }

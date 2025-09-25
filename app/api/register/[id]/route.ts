@@ -1,21 +1,36 @@
 // app/api/register/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import connect from "@/lib/mongodb";
 import Registration from "@/models/Registration";
 import mongoose from "mongoose";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
+
+    if (!id) {
+      return NextResponse.json({ error: "id_required" }, { status: 400 });
+    }
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "invalid_id" }, { status: 400 });
     }
+
     await connect();
     const doc = await Registration.findById(id).lean();
-    if (!doc) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+    if (!doc) {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
+
     return NextResponse.json({ ok: true, registration: doc });
-  } catch (err: any) {
+  } catch (err) {
     console.error("register GET error:", err);
-    return NextResponse.json({ error: "server_error", message: String(err?.message ?? err) }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "server_error", message }, { status: 500 });
   }
 }

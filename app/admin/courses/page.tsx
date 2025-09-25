@@ -11,15 +11,45 @@ import Registration from "../../../models/Registration";
 import Course from "../../../models/Course";
 import { serializeArray } from "../../../utils/serialize";
 
+// Types
+interface AuthPayload {
+  role: string;
+  userId: string;
+  email: string;
+}
+
+interface SerializedRegistration {
+  _id: string;
+  name: string;
+  email: string;
+  createdAt?: string;
+  course?: {
+    title: string;
+  };
+}
+
+interface SerializedCourse {
+  _id: string;
+  title: string;
+  niche?: string;
+  price?: number;
+  duration?: string;
+  createdAt?: string;
+  startTime?: string;
+  mentor?: {
+    name: string;
+  };
+}
+
 export const revalidate = 0; // admin pages should be fresh (optional)
 
 export default async function AdminPage() {
   const token = (await cookies()).get(process.env.COOKIE_NAME || "token")?.value;
   if (!token) redirect("/login");
 
-  let payload: any;
+  let payload: AuthPayload;
   try {
-    payload = verifyToken(token);
+    payload = verifyToken(token) as AuthPayload;
     if (payload.role !== "admin") redirect("/login");
   } catch {
     redirect("/login");
@@ -41,9 +71,8 @@ export default async function AdminPage() {
     Course.find().sort({ createdAt: -1 }).limit(8).lean(),
   ]);
 
-  const recentRegs = serializeArray(recentRegsRaw);
-  const recentCourses = serializeArray(recentCoursesRaw);
-
+ const recentRegs = serializeArray<SerializedRegistration>(recentRegsRaw);
+const recentCourses = serializeArray<SerializedCourse>(recentCoursesRaw);
   return (
     <div className="container mx-auto px-6 py-8">
       {/* Page header */}
@@ -113,14 +142,16 @@ export default async function AdminPage() {
                 {recentRegs.length === 0 ? (
                   <div className="text-sm text-gray-600">No registrations yet.</div>
                 ) : (
-                  recentRegs.map((r: any) => (
-                    <div key={String(r._id)} className="flex items-center justify-between border rounded-md p-3">
+                  recentRegs.map((r) => (
+                    <div key={r._id} className="flex items-center justify-between border rounded-md p-3">
                       <div>
                         <div className="font-medium text-gray-900">{r.name}</div>
                         <div className="text-xs text-gray-700">{r.email}</div>
                         <div className="text-xs text-gray-500">{r.course?.title ?? "—"}</div>
                       </div>
-                      <div className="text-xs text-gray-500">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}</div>
+                      <div className="text-xs text-gray-500">
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}
+                      </div>
                     </div>
                   ))
                 )}
@@ -157,8 +188,8 @@ export default async function AdminPage() {
               {recentCourses.length === 0 ? (
                 <div className="text-sm text-gray-600">No courses yet.</div>
               ) : (
-                recentCourses.map((c: any) => (
-                  <div key={String(c._id)} className="flex items-center justify-between border rounded-md p-3">
+                recentCourses.map((c) => (
+                  <div key={c._id} className="flex items-center justify-between border rounded-md p-3">
                     <div>
                       <div className="font-medium text-gray-900">{c.title}</div>
                       <div className="text-xs text-gray-700">{c.niche ?? "—"}</div>
@@ -181,7 +212,9 @@ export default async function AdminPage() {
                         ) : null}
                       </div>
                     </div>
-                    <div className="text-xs text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}</div>
+                    <div className="text-xs text-gray-500">
+                      {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
+                    </div>
                   </div>
                 ))
               )}

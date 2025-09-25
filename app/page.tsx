@@ -4,7 +4,6 @@ import Hero from "../components/Hero";
 import connect from "../lib/mongodb";
 import Course from "../models/Course";
 import CourseCard from "../components/CourseCard";
-import { serializeArray } from "../utils/serialize";
 import ImpactSection from "../components/ImpactSection";
 import Image from "next/image";
 
