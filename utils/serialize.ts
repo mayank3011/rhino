@@ -263,3 +263,61 @@ export function isSerializedDocument(value: unknown): value is SerializedDocumen
     typeof (value as SerializedDocument).title === "string"
   );
 }
+
+
+// utils/serialize.ts
+export type PlainValue =
+  | string
+  | number
+  | boolean
+  | null
+  | PlainValue[]
+  | { [k: string]: PlainValue };
+
+function isObjectIdLike(v: unknown): boolean {
+  // works for BSON ObjectId or Mongoose ObjectId
+  return Boolean(
+    v &&
+      typeof v === "object" &&
+      // @ts-expect-error runtime duck-typing
+      (typeof v.toHexString === "function" || (v.constructor && v.constructor.name === "ObjectId"))
+  );
+}
+
+function isDateLike(v: unknown): v is Date {
+  return v instanceof Date;
+}
+
+export function toPlain<T>(input: T): PlainValue {
+  if (input == null) return input as unknown as PlainValue;
+
+  // primitives
+  if (typeof input !== "object") return input as unknown as PlainValue;
+
+  // ObjectId
+  if (isObjectIdLike(input)) {
+    // @ts-expect-error runtime duck-typing
+    return String(input.toHexString ? input.toHexString() : String(input));
+  }
+
+  // Date
+  if (isDateLike(input)) {
+    return input.toISOString();
+  }
+
+  // Array
+  if (Array.isArray(input)) {
+    return input.map((x) => toPlain(x)) as PlainValue;
+  }
+
+  // Plain object
+  const out: Record<string, PlainValue> = {};
+  for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
+    out[k] = toPlain(v);
+  }
+  return out as PlainValue;
+}
+
+export function toPlainArray<T>(arr: T[]): PlainValue[] {
+  return arr.map((x) => toPlain(x));
+}

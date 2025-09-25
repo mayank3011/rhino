@@ -5,7 +5,6 @@ import Link from "next/link";
 import CourseCard, { Course } from "./CourseCard";
 
 // --- Constants based on Logo Colors ---
-const COLOR_PRIMARY = "indigo-600";
 const COLOR_ACCENT = "emerald-600";
 
 export default function CourseSection({

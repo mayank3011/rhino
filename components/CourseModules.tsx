@@ -4,155 +4,292 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// --- Constants based on Logo Colors for Tailwind classes ---
-const COLOR_PRIMARY = "indigo-600"; 
-const COLOR_SECONDARY = "violet-700";
+// Types
+interface Topic {
+  text?: string;
+}
 
-// --- Type Definitions ---
-type Topic = { text?: string };
-type ModuleType = { title?: string; topics?: Topic[] };
+interface ModuleType {
+  title?: string;
+  topics?: Topic[];
+}
+
+interface CourseModulesProps {
+  modules?: ModuleType[];
+  accentColor?: string;
+}
 
 export default function CourseModules({
   modules = [],
-  // Use a sensible default hex color for dynamic styling
-  accentColor = "#4f46e5", 
-}: {
-  modules: ModuleType[];
-  accentColor?: string;
-}) {
-  const [open, setOpen] = useState<Record<number, boolean>>({});
+  accentColor = "#6366f1",
+}: CourseModulesProps) {
+  const [openModules, setOpenModules] = useState<Record<number, boolean>>({});
   const [expandedAll, setExpandedAll] = useState(false);
 
-  // 1. Fixed 'any' in useEffect dependency array and initial map
-  // initialize open map (closed by default)
+  // Initialize open state (closed by default)
   useEffect(() => {
-    const initial: Record<number, boolean> = {};
-    modules.forEach((_: ModuleType, i: number) => initial[i] = false); 
-    setOpen(initial);
+    const initialState: Record<number, boolean> = {};
+    modules.forEach((_, index: number) => {
+      initialState[index] = false;
+    });
+    setOpenModules(initialState);
   }, [modules]);
 
-  // 2. Fixed 'any' in useEffect map
-  // Expand all toggle
+  // Handle expand/collapse all
   useEffect(() => {
-    if (expandedAll) {
-      const m: Record<number, boolean> = {};
-      modules.forEach((_: ModuleType, i: number) => m[i] = true);
-      setOpen(m);
-    } else {
-      const m: Record<number, boolean> = {};
-      modules.forEach((_: ModuleType, i: number) => m[i] = false);
-      setOpen(m);
-    }
+    const newState: Record<number, boolean> = {};
+    modules.forEach((_, index: number) => {
+      newState[index] = expandedAll;
+    });
+    setOpenModules(newState);
   }, [expandedAll, modules]);
 
   // Deep-link handling: if URL has #module-X, open that module
   useEffect(() => {
     if (typeof window === "undefined") return;
-    function openFromHash() {
-      const h = window.location.hash;
-      if (!h) return;
-      const match = h.match(/^#module-(\d+)$/);
+    
+    function openFromHash(): void {
+      const hash = window.location.hash;
+      if (!hash) return;
+      
+      const match = hash.match(/^#module-(\d+)$/);
       if (match) {
-        const idx = Number(match[1]);
-        setOpen((s) => ({ ...s, [idx]: true }));
-        // scroll into view for the module
+        const moduleIndex = Number(match[1]);
+        setOpenModules((prevState) => ({ ...prevState, [moduleIndex]: true }));
+        
+        // Scroll into view for the module
         setTimeout(() => {
-          const el = document.getElementById(`module-${idx}`);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 50);
+          const element = document.getElementById(`module-${moduleIndex}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 100);
       }
     }
+    
     openFromHash();
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
   }, []);
 
-  const anyOpen = useMemo(() => Object.values(open).some(Boolean), [open]);
+  const hasOpenModules = useMemo(() => 
+    Object.values(openModules).some(Boolean), 
+    [openModules]
+  );
 
-  function toggle(i: number) {
-    setOpen((s) => ({ ...s, [i]: !s[i] }));
+  function toggleModule(index: number): void {
+    setOpenModules((prevState) => ({
+      ...prevState,
+      [index]: !prevState[index]
+    }));
+  }
+
+  if (!modules || modules.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center">
+          <span className="text-2xl">📚</span>
+        </div>
+        <p className="text-gray-500">No course modules available yet.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-4 border-slate-100">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h3 className={`text-2xl font-bold text-${COLOR_SECONDARY}`}>Course Content</h3>
-          <div className="text-sm text-slate-500">Structured Modules & Topics</div>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Course Content</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {modules.length} modules • {modules.reduce((total, module) => total + (module.topics?.length || 0), 0)} topics
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setExpandedAll((v) => !v)}
-            className="text-sm px-4 py-2 border rounded-lg font-medium transition-colors hover:bg-slate-50"
-            // Retaining dynamic style for accent color
-            style={{ borderColor: accentColor, color: accentColor }}
+            onClick={() => setExpandedAll(prev => !prev)}
+            className="px-4 py-2 text-sm font-medium border-2 rounded-lg transition-all duration-200 hover:shadow-md"
+            style={{ 
+              borderColor: accentColor, 
+              color: accentColor,
+              backgroundColor: expandedAll ? `${accentColor}15` : 'transparent'
+            }}
           >
             {expandedAll ? "Collapse All" : "Expand All"}
           </button>
-          <div className="hidden sm:block text-xs text-slate-400">
-            ({anyOpen ? "Some open" : "All closed"})
+          
+          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+            <div 
+              className="w-2 h-2 rounded-full" 
+              style={{ backgroundColor: hasOpenModules ? accentColor : '#d1d5db' }}
+            />
+            <span>{hasOpenModules ? "Some modules open" : "All modules closed"}</span>
           </div>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {/* 3. Fixed 'any' in modules map argument */}
-        {modules.map((m: ModuleType, i: number) => (
-          <div key={i} id={`module-${i}`} className="border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-            <button
-              onClick={() => toggle(i)}
-              className="w-full flex items-center justify-between p-4 focus:outline-none transition-colors hover:bg-slate-50"
-              aria-expanded={Boolean(open[i])}
+      {/* Modules List */}
+      <div className="space-y-3 sm:space-y-4">
+        {modules.map((module: ModuleType, index: number) => {
+          const isOpen = Boolean(openModules[index]);
+          const topicCount = module.topics?.length || 0;
+          
+          return (
+            <div 
+              key={index} 
+              id={`module-${index}`} 
+              className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200"
             >
-              <div className="text-left flex items-start gap-3">
-                <span className={`text-lg font-extrabold text-${COLOR_PRIMARY} flex-shrink-0`}>
-                  {i + 1}.
-                </span>
-                <div>
-                    <div className="text-lg font-semibold text-gray-800">
-                      {m.title || `Module ${i + 1}`}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      {(m.topics || []).length} topics
-                    </div>
-                </div>
-              </div>
-              
-              {/* Chevron icon with rotation */}
-              <div className="ml-4 text-slate-500 flex-shrink-0 transition-transform duration-280" style={{ transform: open[i] ? "rotate(180deg)" : "rotate(0deg)" }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  {/* Stroke color uses dynamic prop */}
-                  <path d="M6 9l6 6 6-6" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {open[i] && (
-                <motion.div
-                  key="content"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.28, ease: "easeInOut" }}
-                  className="overflow-hidden bg-slate-50/50"
-                >
-                  <div className="px-4 pb-4 pt-2 border-t border-slate-100">
-                    <ol className="list-decimal pl-5 space-y-2 text-slate-700">
-                      {/* 4. Fixed 'any' in topics map argument */}
-                      {(m.topics || []).map((t: Topic, ti: number) => (
-                        <li key={ti} className="py-1">
-                          <div className="text-base font-normal">{t.text ?? `Topic ${ti + 1}`}</div>
-                        </li>
-                      ))}
-                    </ol>
+              {/* Module Header */}
+              <button
+                onClick={() => toggleModule(index)}
+                className="w-full flex items-center justify-between p-4 sm:p-6 text-left hover:bg-gray-50 transition-colors duration-200"
+                aria-expanded={isOpen}
+                aria-controls={`module-content-${index}`}
+              >
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                  {/* Module Number */}
+                  <div 
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-sm sm:text-base font-bold flex-shrink-0"
+                    style={{ backgroundColor: accentColor }}
+                  >
+                    {index + 1}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  
+                  {/* Module Info */}
+                  <div className="min-w-0 flex-1">
+                    <h4 
+                      className="text-base sm:text-lg font-semibold mb-1 truncate sm:whitespace-normal"
+                      style={{ color: accentColor }}
+                    >
+                      {module.title || `Module ${index + 1}`}
+                    </h4>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-gray-500">
+                      <span>{topicCount} topic{topicCount !== 1 ? 's' : ''}</span>
+                      {topicCount > 0 && (
+                        <>
+                          <span className="hidden sm:inline">•</span>
+                          <span className="truncate">
+                            {isOpen ? 'Click to collapse' : 'Click to expand'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expand/Collapse Icon */}
+                <div className="ml-4 flex-shrink-0">
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none"
+                    className="transition-transform duration-200"
+                    style={{ 
+                      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      color: accentColor 
+                    }}
+                  >
+                    <path 
+                      d="M6 9l6 6 6-6" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Module Content */}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                    id={`module-content-${index}`}
+                  >
+                    <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                      <div className="border-t border-gray-100 pt-4">
+                        {topicCount > 0 ? (
+                          <div className="space-y-3">
+                            <h5 className="text-sm font-medium text-gray-700 mb-3">
+                              Topics covered:
+                            </h5>
+                            <ol className="space-y-2 sm:space-y-3">
+                              {module.topics?.map((topic: Topic, topicIndex: number) => (
+                                <li 
+                                  key={topicIndex} 
+                                  className="flex items-start gap-3 group"
+                                >
+                                  <div className="flex items-center gap-3 flex-1">
+                                    {/* Topic Number */}
+                                    <div 
+                                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
+                                      style={{ backgroundColor: `${accentColor}cc` }}
+                                    >
+                                      {topicIndex + 1}
+                                    </div>
+                                    
+                                    {/* Topic Text */}
+                                    <span className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                                      {topic.text || `Topic ${topicIndex + 1}`}
+                                    </span>
+                                  </div>
+
+                                  {/* Progress Indicator (placeholder) */}
+                                  <div className="hidden sm:flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <div className="w-4 h-4 rounded-full border-2 border-gray-300"></div>
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        ) : (
+                          <div className="text-center py-6">
+                            <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                              <span className="text-gray-400 text-lg">📄</span>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              No topics available for this module yet.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer Info */}
+      <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2 text-gray-600">
+            <svg className="w-4 h-4 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <span>Course content is subject to updates and improvements.</span>
           </div>
-        ))}
+          
+          <div className="flex items-center gap-4 text-xs text-gray-500">
+            <span>Progress tracking coming soon</span>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

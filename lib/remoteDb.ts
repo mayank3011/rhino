@@ -5,7 +5,6 @@ type MaybeConnection = mongoose.Connection | null;
 
 declare global {
   // Cache connection across module reloads / HMR in development
-  // eslint-disable-next-line no-var
   var _remoteMongooseConnection: {
     conn: MaybeConnection;
     promise: Promise<mongoose.Connection> | null;
