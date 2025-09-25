@@ -4,29 +4,35 @@ import React from "react";
 import { Menu, Transition } from "@headlessui/react";
 import Link from "next/link";
 
+// Color constants based on the desired theme (Indigo/Violet for primary, Emerald for accent)
+const PRIMARY_BG_COLOR = "bg-indigo-950"; // Dark indigo background
+const ACCENT_COLOR = "bg-emerald-500";
+const ACCENT_HOVER = "hover:bg-emerald-600";
+const TEXT_COLOR = "text-white";
+const SHADOW_COLOR = "shadow-lg shadow-indigo-900/50";
+
 export default function Hero() {
   return (
-    <section className="relative bg-[url('/pattern-grid.png')] bg-[#0f3d3e] text-white rounded-3xl overflow-hidden mx-4 lg:mx-20 mt-10">
-      {/* Background pattern (optional grid lines) */}
-      <div className="absolute inset-0 opacity-20" />
+    <section className={`relative ${PRIMARY_BG_COLOR} ${TEXT_COLOR} rounded-3xl overflow-hidden mx-4 lg:mx-20 mt-10 ${SHADOW_COLOR}`}>
+      {/* Subtle Background Pattern (using radial gradient for depth) */}
+      <div className="absolute inset-0 bg-indigo-900/50 opacity-50 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]" />
 
       <div className="relative container mx-auto px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Left column */}
+        
+        {/* Left column: Headline and CTA */}
         <div>
-          <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-            Become Top 1% in the <br /> AI-First World
+          <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight tracking-tight">
+            Level up your career with <span className="text-emerald-300">expert-led coding</span> programs.
           </h1>
-          <p className="mt-6 text-lg text-gray-200 max-w-lg">
-            Whether it is Product, Growth, Design, Business, Tech or Data,
-            GrowthSchool is the place to learn from top experts in the field to
-            become the Top 1%.
+          <p className="mt-6 text-xl text-indigo-200 max-w-xl">
+            RhinoGeeks is where aspiring developers learn from top experts to master modern web technologies, build impressive projects, and land their dream jobs in the tech industry.
           </p>
 
           {/* CTA Dropdown */}
-          <div className="mt-8">
+          <div className="mt-10">
             <Menu as="div" className="relative inline-block text-left">
-              <Menu.Button className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-md font-medium transition">
-                Explore Programs
+              <Menu.Button className={`inline-flex items-center gap-3 ${ACCENT_COLOR} ${ACCENT_HOVER} text-white px-8 py-4 rounded-xl shadow-2xl shadow-emerald-500/40 font-bold text-lg transition-all duration-300 transform hover:scale-105`}>
+                🚀 Explore Programs
               </Menu.Button>
 
               <Transition
@@ -37,15 +43,14 @@ export default function Hero() {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
               >
-                <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left bg-white text-gray-800 rounded-lg shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
+                <Menu.Items className="absolute left-0 mt-3 w-56 origin-top-left bg-white text-gray-800 rounded-xl shadow-2xl ring-1 ring-black/10 focus:outline-none z-50">
                   <div className="py-2">
+                    {/* Program Links */}
                     <Menu.Item>
                       {({ active }) => (
                         <Link
                           href="/courses"
-                          className={`block px-4 py-2 text-sm rounded ${
-                            active ? "bg-gray-100" : ""
-                          }`}
+                          className={`block px-4 py-3 text-base font-medium transition-colors ${active ? "bg-indigo-50 text-indigo-700" : ""}`}
                         >
                           All Courses
                         </Link>
@@ -55,9 +60,7 @@ export default function Hero() {
                       {({ active }) => (
                         <Link
                           href="/workshops"
-                          className={`block px-4 py-2 text-sm rounded ${
-                            active ? "bg-gray-100" : ""
-                          }`}
+                          className={`block px-4 py-3 text-base font-medium transition-colors ${active ? "bg-indigo-50 text-indigo-700" : ""}`}
                         >
                           Workshops
                         </Link>
@@ -67,9 +70,7 @@ export default function Hero() {
                       {({ active }) => (
                         <Link
                           href="/mentorship"
-                          className={`block px-4 py-2 text-sm rounded ${
-                            active ? "bg-gray-100" : ""
-                          }`}
+                          className={`block px-4 py-3 text-base font-medium transition-colors ${active ? "bg-indigo-50 text-indigo-700" : ""}`}
                         >
                           Mentorship
                         </Link>
@@ -82,17 +83,23 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right column (stacked cards / example program) */}
-        <div className="relative flex flex-col items-center">
-          <div className="space-y-6">
-            <div className="bg-emerald-900/50 border border-emerald-700 shadow-lg backdrop-blur-md rounded-lg px-10 py-6 text-center text-lg font-semibold">
-              D2C Founder
+        {/* Right column: Stacked examples */}
+        <div className="relative flex justify-center lg:justify-end py-10 lg:py-0">
+          <div className="space-y-6 w-full max-w-sm">
+            
+            {/* Example Card 1 (D2C Founder) - Rotated slightly for visual interest */}
+            <div className="bg-indigo-800/80 border border-indigo-600 shadow-xl backdrop-blur-sm rounded-xl px-10 py-6 text-center text-xl font-bold transform -rotate-3 transition-transform duration-500 hover:rotate-0 hover:scale-105 cursor-pointer">
+              Full-Stack Development
             </div>
-            <div className="bg-emerald-900/40 border border-emerald-600 shadow-md rounded-lg px-10 py-6 text-center text-lg font-semibold">
-              Product Manager
+            
+            {/* Example Card 2 (Product Manager) - Primary emphasis */}
+            <div className="bg-indigo-700/90 border border-indigo-500 shadow-2xl backdrop-blur-sm rounded-xl px-10 py-6 text-center text-xl font-bold z-10 transition-transform duration-500 hover:scale-110 cursor-pointer">
+              Data Science & AI
             </div>
-            <div className="bg-emerald-900/30 border border-emerald-500 shadow-sm rounded-lg px-10 py-6 text-center text-lg font-semibold">
-              AI Engineer
+            
+            {/* Example Card 3 (AI Engineer) - Rotated slightly for visual interest */}
+            <div className="bg-indigo-800/80 border border-indigo-600 shadow-xl backdrop-blur-sm rounded-xl px-10 py-6 text-center text-xl font-bold transform rotate-3 transition-transform duration-500 hover:rotate-0 hover:scale-105 cursor-pointer">
+              UI/UX Design
             </div>
           </div>
         </div>

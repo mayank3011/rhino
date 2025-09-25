@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -8,9 +9,9 @@ export default function Footer() {
         {/* Brand */}
         <div>
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">RG</div>
+            <Image src="/logo.png" alt="RhinoGeeks" width={40} height={40} />
             <div>
-              <div className="font-semibold">Rhino Courses</div>
+              <div className="font-semibold">RhinoGeeks</div>
               <div className="text-sm text-slate-600">Industry-ready skills & workshops</div>
             </div>
           </Link>
@@ -70,7 +71,7 @@ export default function Footer() {
 
       <div className="border-t">
         <div className="container mx-auto px-4 py-4 text-sm text-slate-600 flex flex-col md:flex-row justify-between items-center">
-          <div>© {new Date().getFullYear()} Rhino Courses — All rights reserved.</div>
+          <div>© {new Date().getFullYear()} RhinoGeeks — All rights reserved.</div>
           <div className="mt-2 md:mt-0">Made with ♥ · <Link href="/terms" className="underline">Terms</Link></div>
         </div>
       </div>

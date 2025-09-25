@@ -139,13 +139,12 @@ export default function Navbar() {
               {learnOpen && (
                 <div className="absolute left-0 mt-2 w-48 bg-white border border-slate-100 rounded-lg shadow-xl py-2 z-30">
                   <Link href="/courses" className="block px-4 py-2 text-sm text-gray-800 hover:bg-slate-50">All Courses</Link>
-                  <Link href="/workshops" className="block px-4 py-2 text-sm text-gray-800 hover:bg-slate-50">Workshops</Link>
-                  <Link href="/mentorship" className="block px-4 py-2 text-sm text-gray-800 hover:bg-slate-50">Mentorship</Link>
+                  {/* <Link href="/workshops" className="block px-4 py-2 text-sm text-gray-800 hover:bg-slate-50">Workshops</Link>
+                  <Link href="/mentorship" className="block px-4 py-2 text-sm text-gray-800 hover:bg-slate-50">Mentorship</Link> */}
                 </div>
               )}
             </div>
 
-            <Link href="/teams" className={`hover:text-${COLOR_PRIMARY} transition-colors`}>Upskill your Team</Link>
             <Link href="/about" className={`hover:text-${COLOR_PRIMARY} transition-colors`}>About Us</Link>
             <Link href="/contact" className={`hover:text-${COLOR_PRIMARY} transition-colors`}>Contact</Link>
           </nav>

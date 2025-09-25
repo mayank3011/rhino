@@ -25,6 +25,7 @@
     "pg-sdk-node": "^2.0.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-fast-marquee": "^1.6.5",
     "react-hook-form": "^7.62.0",
     "react-hot-toast": "^2.6.0",
     "streamifier": "^0.1.1",

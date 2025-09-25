@@ -6,7 +6,10 @@ import ToastProvider from "../components/ToastProvider";
 import { Inter } from "next/font/google";
 
 
-export const metadata = { title: "Rhino Courses" };
+export const metadata = { 
+  title: "RhinoGeeks",
+  favicon: "/favicon.ico",
+ };
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
