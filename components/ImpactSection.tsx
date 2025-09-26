@@ -111,8 +111,8 @@ export default function ImpactSection() {
   }, []);
 
   return (
-    <section className="py-15">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="py-15 lg:mx-32 ">
+      <div className="container  px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* LEFT: big rounded panel */}
           <div className="lg:col-span-8 rounded-2xl overflow-hidden relative p-8 bg-white border border-slate-200 shadow-xl">
