@@ -27,8 +27,16 @@ export default function ImpactSection() {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const [currentSpeed, setCurrentSpeed] = useState(0.5); // px per animation frame tick multiplier
+  // Use a ref to store the current speed for the animation loop
+  const speedRef = useRef(0.5); 
   const [isHovered, setIsHovered] = useState(false);
+  // Use a ref for isHovered to avoid re-running the main useEffect
+  const isHoveredRef = useRef(isHovered); 
+  
+  // Update the ref whenever the state changes
+  useEffect(() => {
+    isHoveredRef.current = isHovered;
+  }, [isHovered]);
 
   // Duplicate items for a seamless loop
   const items = [...partners, ...partners];
@@ -53,15 +61,15 @@ export default function ImpactSection() {
       last = now;
 
       // New animation logic: gradually adjust speed based on hover state
-      if (isHovered) {
+      if (isHoveredRef.current) {
         // Slow down to a stop
-        setCurrentSpeed(s => Math.max(0, s - 0.02)); 
+        speedRef.current = Math.max(0, speedRef.current - 0.02);
       } else {
-        // Speed up to the normal pace
-        setCurrentSpeed(s => Math.min(0.5, s + 0.02));
+        // Speed up to the normal pace (0.5)
+        speedRef.current = Math.min(0.5, speedRef.current + 0.02);
       }
 
-      const px = (basePxPerSecond * currentSpeed * delta) / 1000;
+      const px = (basePxPerSecond * speedRef.current * delta) / 1000;
       wrapper.scrollLeft += px;
 
       const singleWidth = track.scrollWidth / 2 || 0;
@@ -79,7 +87,9 @@ export default function ImpactSection() {
         rafRef.current = null;
       }
     };
-  }, [isHovered, currentSpeed]);
+  // FIX: Removed currentSpeed from dependencies to prevent infinite loop.
+  // isHovered state is now monitored via the isHoveredRef.
+  }, []); 
 
 
   // Touch: when user touches, pause autoplay
