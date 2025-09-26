@@ -12,7 +12,7 @@ const SHADOW_COLOR = "shadow-lg shadow-indigo-900/50";
 
 export default function Hero() {
   return (
-    <section className={`relative ${PRIMARY_BG_COLOR} ${TEXT_COLOR} rounded-3xl overflow-hidden mx-4 lg:mx-20 mt-10 ${SHADOW_COLOR}`}>
+    <section className={`relative ${PRIMARY_BG_COLOR} ${TEXT_COLOR} rounded-3xl overflow-hidden mx-4 lg:mx-32 my-10 ${SHADOW_COLOR}`}>
       {/* Background Image and Overlay */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center"
@@ -26,45 +26,17 @@ export default function Hero() {
       {/* Subtle Background Pattern (using radial gradient for depth) */}
       <div className="absolute inset-0 bg-indigo-900/50 opacity-50 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] z-10" />
 
-      {/* Floating Icons with Animations */}
-      <div className="absolute inset-0 z-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 animate-float opacity-30">
-          <svg className="w-16 h-16 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="16 18 22 12 16 6"></polyline>
-            <polyline points="8 6 2 12 8 18"></polyline>
-          </svg>
-        </div>
-        <div className="absolute top-1/2 left-3/4 animate-float-delay-2 opacity-30">
-          <svg className="w-20 h-20 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="16 18 22 12 16 6"></polyline>
-            <polyline points="8 6 2 12 8 18"></polyline>
-          </svg>
-        </div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-spin-slow opacity-30">
-          <svg className="w-24 h-24 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
-            <path d="M12 2v20"></path>
-            <path d="M4.93 4.93l14.14 14.14"></path>
-            <path d="M2 12h20"></path>
-            <path d="M4.93 19.07L19.07 4.93"></path>
-          </svg>
-        </div>
-        <div className="absolute bottom-1/4 right-1/4 animate-float-delay-3 opacity-30">
-          <svg className="w-20 h-20 text-yellow-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="16 18 22 12 16 6"></polyline>
-            <polyline points="8 6 2 12 8 18"></polyline>
-          </svg>
-        </div>
-      </div>
 
       <div className="relative container mx-auto px-6 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center z-30">
         
         {/* Left column: Headline and CTA */}
         <div>
-          <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight tracking-tight">
+          <h1 className="text-3xl lg:text-5xl font-bold leading-tight tracking-tight">
             Level up your career with <span className="text-emerald-300">expert-led coding</span> programs.
           </h1>
-          <p className="mt-6 text-xl text-indigo-200 max-w-xl">
+          
+          {/* Description - Hidden on mobile, shown on lg and up */}
+          <p className="mt-6 text-0.5xl text-indigo-200 max-w-xl hidden lg:block">
             RhinoGeeks is where aspiring developers learn from top experts to master modern web technologies, build impressive projects, and land their dream jobs in the tech industry.
           </p>
 
@@ -123,8 +95,8 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right column: Stacked examples */}
-        <div className="relative flex justify-center lg:justify-end py-10 lg:py-0">
+        {/* Right column: Stacked examples - Hidden on mobile, shown on lg and up */}
+        <div className="relative justify-center lg:justify-end py-10 lg:py-0 hidden lg:flex">
           <div className="space-y-6 w-full max-w-sm">
             
             {/* Example Card 1 (D2C Founder) - Rotated slightly for visual interest */}
