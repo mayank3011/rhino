@@ -5,12 +5,13 @@ import Image from "next/image";
 export default function Footer() {
   return (
     <footer className="bg-slate-50 border-t mt-0">
-      <div className="container mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="container mx-auto max-w-7xl px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Brand */}
         <div>
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo.png" alt="RhinoGeeks" width={40} height={40} />
-            <div>
+            {/* FIX: suppressHydrationWarning added here to resolve browser extension attribute mismatch */}
+            <div suppressHydrationWarning={true}>
               <div className="font-semibold">RhinoGeeks</div>
               <div className="text-sm text-slate-600">Industry-ready skills & workshops</div>
             </div>
@@ -70,7 +71,10 @@ export default function Footer() {
 
       <div className="border-t">
         <div className="container mx-auto px-4 py-4 text-sm text-slate-600 flex flex-col md:flex-row justify-between items-center">
-          <div>© {new Date().getFullYear()} RhinoGeeks — All rights reserved.</div>
+          {/* FIX: suppressHydrationWarning added here to prevent issues with client/server date mismatch */}
+          <div suppressHydrationWarning={true}>
+            © {new Date().getFullYear()} RhinoGeeks — All rights reserved.
+          </div>
           <div className="mt-2 md:mt-0">Made with ♥ · <Link href="/terms" className="underline">Terms</Link></div>
         </div>
       </div>
